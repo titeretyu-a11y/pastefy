@@ -1,0 +1,28 @@
+local Players = game:GetService("Players")
+local localPlayer = Players.LocalPlayer
+local MY_ID = 12345678
+
+if localPlayer.UserId ~= MY_ID then return end
+
+local function addESP(char)
+	if not char or char:FindFirstChild("ESP") then return end
+	local esp = Instance.new("Highlight")
+	esp.Name = "ESP"
+	esp.Adornee = char
+	esp.FillTransparency = 1
+	esp.OutlineColor = Color3.fromRGB(0, 255, 0)
+	esp.OutlineTransparency = 0
+	esp.Parent = char
+end
+
+local function setup(p)
+	if p == localPlayer then return end
+	if p.Character then addESP(p.Character) end
+	p.CharacterAdded:Connect(addESP)
+end
+
+for _, p in ipairs(Players:GetPlayers()) do
+	setup(p)
+end
+
+Players.PlayerAdded:Connect(setup)
