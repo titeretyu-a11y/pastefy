@@ -1,0 +1,55 @@
+local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+
+local animalNames = {
+	"Deer", "Coyote", "Wolf", "Fox",
+	"BlackBear", "GrizzlyBear", "Bison", "DireWolf",
+	"LegendaryDeer", "LegendaryGrizzlyBear", "LegendaryBlackBear",
+	"LegendaryWolf", "LegendaryCoyote", "LegendaryBison", "LegendaryDireWolf"
+}
+
+local hitboxSize = Vector3.new(25, 25, 25)
+local showHitboxes = true
+
+local function resizeHitbox(model)
+	local hitbox = model:FindFirstChild("HumanoidRootPart") or model:FindFirstChild("Hitbox")
+	if hitbox and hitbox:IsA("BasePart") then
+		hitbox.Size = hitboxSize
+		hitbox.CanCollide = false
+		hitbox.BrickColor = BrickColor.new("Bright red")
+		hitbox.Transparency = showHitboxes and 0.7 or 1
+	end
+end
+
+local function toggleHitboxes()
+	showHitboxes = not showHitboxes
+	for _, obj in pairs(Workspace:GetDescendants()) do
+		if obj:IsA("BasePart") and table.find(animalNames, obj.Parent and obj.Parent.Name) then
+			obj.Transparency = showHitboxes and 0.7 or 1
+		end
+	end
+end
+
+for _, obj in pairs(Workspace:GetDescendants()) do
+	if obj:IsA("Model") and table.find(animalNames, obj.Name) then
+		resizeHitbox(obj)
+	end
+end
+
+Workspace.DescendantAdded:Connect(function(obj)
+	if obj:IsA("Model") and table.find(animalNames, obj.Name) then
+		task.wait(0.5)
+		resizeHitbox(obj)
+	end
+end)
+
+Players.PlayerAdded:Connect(function(player)
+	player.CharacterAdded:Connect(function()
+		local UIS = game:GetService("UserInputService")
+		UIS.InputBegan:Connect(function(input, processed)
+			if not processed and input.KeyCode == Enum.KeyCode.H then
+				toggleHitboxes()
+			end
+		end)
+	end)
+end)
