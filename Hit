@@ -1,0 +1,79 @@
+-- [[ 1. ANIMAL HITBOX SCRIPT (วางใน ServerScriptService) ]]
+
+local Workspace = game:GetService("Workspace")
+
+-- *** CONFIGURATION (ตรวจสอบชื่อโมเดลสัตว์ในเกมของคุณ) ***
+local ANIMAL_NAMES = {
+    "Deer", "Coyote", "Fox", "Wolf", "Black Bear", "Grizzly Bear", "Bison", 
+    "Blue Wolf", "Dire Wolf", "Legendary Deer", "Legendary Grizzly Bear", 
+    "Legendary Black Bear", "Legendary Coyote", "Legendary Wolf", "Legendary Dire Wolf"
+}
+
+local HITBOX_SIZE = Vector3.new(30, 30, 30)
+local HITBOX_NAME = "HeadHitbox"
+local DAMAGE_MULTIPLIER = 2 -- Headshot Damage Multiplier
+-- *************************************************************
+
+-- ฟังก์ชันจัดการ Hitbox เมื่อมีกระสุนชน
+local function onHitboxTouched(hitboxPart, otherPart)
+    -- ตรวจสอบว่าเป็นกระสุนที่มีค่าดาเมจหรือไม่
+    local damageValue = otherPart:GetAttribute("Damage") 
+
+    if damageValue then
+        
+        local animalModel = hitboxPart.Parent 
+        local humanoid = animalModel:FindFirstChildOfClass("Humanoid")
+        
+        if humanoid and humanoid.Health > 0 then
+            
+            local finalDamage = damageValue * DAMAGE_MULTIPLIER
+            
+            humanoid:TakeDamage(finalDamage)
+            
+            -- ทำลายกระสุนหลังจากชน
+            otherPart:Destroy()
+        end
+    end
+end
+
+-- ฟังก์ชันสร้าง Hitbox และเชื่อม (Weld)
+local function createAndWeldHitbox(animalModel)
+    local targetPart = animalModel:FindFirstChild("Head") -- ต้องมี Part ชื่อ "Head"
+    
+    if not targetPart then
+        warn(animalModel.Name .. " does not have a 'Head' Part. Hitbox not created.")
+        return
+    end
+
+    local hitbox = Instance.new("Part")
+    hitbox.Name = HITBOX_NAME
+    hitbox.Size = HITBOX_SIZE
+    hitbox.CFrame = targetPart.CFrame 
+    hitbox.CanCollide = false
+    hitbox.Transparency = 1 -- มองไม่เห็น
+    hitbox.Massless = true 
+    hitbox.Parent = animalModel
+    
+    local weld = Instance.new("WeldConstraint")
+    weld.Part0 = hitbox
+    weld.Part1 = targetPart
+    weld.Parent = hitbox
+    
+    hitbox.Touched:Connect(function(otherPart)
+        onHitboxTouched(hitbox, otherPart)
+    end)
+    
+    print("Hitbox created for " .. animalModel.Name)
+end
+
+-- ฟังก์ชันหลัก: ค้นหาโมเดลสัตว์ทั้งหมดใน Workspace
+local function setupAllAnimalHitboxes()
+    for _, child in ipairs(Workspace:GetChildren()) do
+        if child:IsA("Model") and table.find(ANIMAL_NAMES, child.Name) then
+            createAndWeldHitbox(child)
+        end
+    end
+end
+
+-- เริ่มการทำงานเมื่อเกมเริ่มต้น
+setupAllAnimalHitboxes()
